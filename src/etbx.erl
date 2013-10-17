@@ -223,9 +223,7 @@ run(Port, Data, Timeout) ->
                 NewBin = to_binary(NewData),
                 run(Port, <<Data/binary,NewBin/binary>>, Timeout);
             {Port, {exit_status, 0}} -> {ok, Data};
-            {Port, {exit_status, S}} -> throw({error, S})
+            {Port, {exit_status, S}} -> {error, S}
     after Timeout 
               -> throw(timeout)
     end.
-            
-            
