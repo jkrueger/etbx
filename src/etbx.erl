@@ -9,7 +9,7 @@
 -export([is_nil/0, is_nil/1]).
 -export([maybe_apply/3, maybe_apply/4]).
 -export([update/3]).
--export([run/1, run/2]).
+-export([run/1, run/2, run/3]).
 -export([set_loglevel/1]).
 -export([start_app/1]).
 -export([stop_app/1]).
@@ -212,16 +212,26 @@ to_atom(X, unsafe) when is_atom(X) ->
 %%%=========================================================================
 
 run(Cmd) ->
-    run(Cmd, 5000).
+    run(Cmd, noinput, 5000).
 
-run(Cmd, Timeout) ->
+run(Cmd, Timeout) when is_number(Timeout) ->
+    run(Cmd, noinput, Timeout);
+run(Cmd, Input) when is_list(Input) ->
+    run(Cmd, Input, 5000).
+
+run(Cmd, Input, Timeout) ->
     Port = open_port({spawn, Cmd}, [exit_status]),
-    run(Port, <<>>, Timeout).
+    if Input =/= noinput ->
+       Port ! {self(), {command, Input}};
+       true ->
+            ok
+    end,
+    run_loop(Port, <<>>, Timeout).
 
-run(Port, Data, Timeout) ->
+run_loop(Port, Data, Timeout) ->
     receive {Port, {data, NewData}}  -> 
                 NewBin = to_binary(NewData),
-                run(Port, <<Data/binary,NewBin/binary>>, Timeout);
+                run_loop(Port, <<Data/binary,NewBin/binary>>, Timeout);
             {Port, {exit_status, 0}} -> {ok, Data};
             {Port, {exit_status, S}} -> {error, S}
     after Timeout 
