@@ -6,6 +6,7 @@
 -export([contains/2]).
 -export([get_env/1, get_env/2]).
 -export([index_of/2]).
+-export([index_of_any/2]).
 -export([is_nil/0, is_nil/1]).
 -export([maybe_apply/3, maybe_apply/4]).
 -export([update/3]).
@@ -115,6 +116,20 @@ index_of(X, [H | T], I) ->
 -spec index_of(any(), list()) -> number() | undefined.            
 index_of(X, L) ->
     index_of(X, L, 0).
+
+%% @doc returns the index for the first occurence of *any* of the elements
+%% in the list provided or undefined if none of those elements is in the list
+-spec index_of_any(list(), list()) -> number() | undefined.
+%% @private
+index_of_any([], _) ->
+    undefined;
+index_of_any([H | T], L) ->
+    case index_of(H, L) of
+        undefined ->
+            index_of_any(T, L);
+        I -> I
+     end.                          
+    
 %% @doc converts a property list into a record.
 -spec to_rec(recspec(), proplist()) -> record().
 to_rec({R, [_ | N], Spec}, P) when is_atom(R) and is_list(Spec) ->

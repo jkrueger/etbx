@@ -93,3 +93,11 @@ to_atom_test_() ->
      ?_assertEqual(etbx:to_atom(24,           unsafe), '24'),
      ?_assertEqual(etbx:to_atom(1.618,        unsafe),
                    '1.61800000000000010481e+00')].
+
+index_of_any_test_() ->
+    [?_assertEqual(undefined, etbx:index_of_any([foo], [])),
+     ?_assertEqual(0,         etbx:index_of_any([man, foo], [foo, bar])),
+     ?_assertEqual(1,         etbx:index_of_any([foo, baz], [bar, foo])),
+     ?_assertEqual(2,         etbx:index_of_any([bar, foo], [baz, foo, bar])),
+     ?_assertEqual(2,         etbx:index_of_any([foo], [baz, bar, foo])),
+     ?_assertEqual(undefined, etbx:index_of_any([foo], [baz, bar]))].
