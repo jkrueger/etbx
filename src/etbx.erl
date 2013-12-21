@@ -3,6 +3,7 @@
 
 -module(etbx).
 -vsn("1.0.0").
+-export([any/2]).
 -export([contains/2]).
 -export([get_env/1, get_env/2]).
 -export([index_of/2]).
@@ -19,6 +20,17 @@
 -export([to_list/1]).
 -export([to_rec/2]).
 -export([to_string/1]).
+
+%% @doc Returns one element from the list for which Pred(Elem) is true.
+%% Kinda like lists:any but instead of returning true, it returns
+%% the element itself.
+any(_, []) ->
+    false;
+any(Pred, [H | T]) ->
+    IsTrue = Pred(H),
+    if IsTrue -> H;
+       true   -> any(Pred, T)
+    end.
 
 %% @doc Retrieves an Application env setting
 -spec get_env(atom()) -> any().
