@@ -21,15 +21,15 @@
 -export([to_rec/2]).
 -export([to_string/1]).
 
-%% @doc Returns one element from the list for which Pred(Elem) is true.
+%% @doc Returns one element from the list for which Pred(Elem) is not false.
 %% Kinda like lists:any but instead of returning true, it returns
-%% the element itself.
+%% the value returned by the predicate.
 any(_, []) ->
     false;
 any(Pred, [H | T]) ->
-    IsTrue = Pred(H),
-    if IsTrue -> H;
-       true   -> any(Pred, T)
+    V = Pred(H),
+    if V =:= false -> any(Pred, T);
+       true -> V
     end.
 
 %% @doc Retrieves an Application env setting

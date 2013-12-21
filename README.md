@@ -22,8 +22,7 @@ If you need to use hooks, which a module might or might not implement, use `etbx
 ## Working with values and types
 
 ### etbx:any/2
-`etbx:any(Pred, List)` Returns one element from the list for which
-Pred(Elem) is true. Kinda like lists:any but instead of returning true, it returns the element itself.
+`etbx:any(Pred, List)` Returns one element from the list for which Pred(Elem) is not false. Kinda like lists:any but instead of returning true, it returns the value returned by the predicate.
 
 ### etbx:contains/2
 `etbx:contains(Element, List)` Tests if a given element is present in a list.
