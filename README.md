@@ -44,7 +44,7 @@ etbx:to_rec(?RECSPEC(frob), [{baz, "baz"}, {foo, "foo"}])
 which yields `#frob{foo="foo", bar="bar", baz="baz"}`
 
 ### etbx:merge/1
-`etbx:merge(List)` Merges elements of the list. Right now it is for proplists.. so it will return a single proplist with all the properties from all the proplist in List. Note that proplists to the right take precedence over proplists on the left.
+`etbx:merge(List)` Merges elements of the list. Right now it is for proplists and dicts.. so it will return a single object with all the keys from all the objects in List. Note that objects to the right take precedence over objects on the left.
 ### etbx:update/3
 `etbx:update(K, V, Proplist)` "Replaces" an entry for K in a proplist with the given value. If the entry doesn't exist, it is added to the proplist.
 

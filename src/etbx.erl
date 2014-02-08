@@ -181,24 +181,33 @@ update(K, V, []) ->
 update(K, V, [{_,_}|_] = L) ->
     [{K, V} | proplists:delete(K, L)].
 
-%% @doc merge property lists in list L. It returns a single proplist with
-%% all the merged values. If a property is present in the list more than once,
-%% the value will be that of the proplist found last on the list (from left
-%% to right)
--spec merge([proplist()]) -> proplist().
+%% @doc merge objects in list L. It returns a single object with
+%% all the merged values. If a key is present in the list more than once,
+%% the value will be that of the object found last on the list (from left
+%% to right).
+%% Objects can be proplists or dictionaries
+-spec merge([proplist()|dict()]) -> proplist() | dict().
+merge([{dict,_,_,_,_,_,_,_,_} | _] = L) ->
+    merge(L, dict:new());
 merge(L) -> 
     merge(L, []).
 
 %% @private
 merge([], A) ->
     A;
-merge([H|T], A) ->
+merge([[{_,_} | _] = H |T], A) ->
     merge(T, lists:foldl(
                fun({K,V}, AA) ->
                        update(K, V, AA)
                end,
+               A, H));
+merge([{dict,_,_,_,_,_,_,_,_} = H | T], A) ->
+    merge(T, dict:merge(
+               fun(_, _, V) ->
+                       V
+               end,
                A, H)).
-
+               
 %%%=========================================================================
 %%% Type conversion
 %%%=========================================================================
