@@ -10,6 +10,7 @@
 -export([index_of_any/2]).
 -export([is_nil/0, is_nil/1]).
 -export([maybe_apply/3, maybe_apply/4]).
+-export([merge/1]).
 -export([update/3]).
 -export([run/1, run/2, run/3]).
 -export([set_loglevel/1]).
@@ -179,6 +180,24 @@ update(K, V, []) ->
     [{K,V}];
 update(K, V, [{_,_}|_] = L) ->
     [{K, V} | proplists:delete(K, L)].
+
+%% @doc merge property lists in list L. It returns a single proplist with
+%% all the merged values. If a property is present in the list more than once,
+%% the value will be that of the proplist found last on the list (from left
+%% to right)
+-spec merge([proplist()]) -> proplist().
+merge(L) -> 
+    merge(L, []).
+
+%% @private
+merge([], A) ->
+    A;
+merge([H|T], A) ->
+    merge(T, lists:foldl(
+               fun({K,V}, AA) ->
+                       update(K, V, AA)
+               end,
+               A, H)).
 
 %%%=========================================================================
 %%% Type conversion

@@ -101,3 +101,8 @@ index_of_any_test_() ->
      ?_assertEqual(2,         etbx:index_of_any([bar, foo], [baz, foo, bar])),
      ?_assertEqual(2,         etbx:index_of_any([foo], [baz, bar, foo])),
      ?_assertEqual(undefined, etbx:index_of_any([foo], [baz, bar]))].
+
+merge_test_() ->
+    [?_assertEqual([],             etbx:merge([])),
+     ?_assertEqual([{b,2}, {a,1}], etbx:merge([[{a,1}], [{b,2}]])),
+     ?_assertEqual([{b,0}, {a,1}], etbx:merge([[{a,1}, {b,2}], [{b,0}]]))].
