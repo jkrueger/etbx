@@ -195,6 +195,8 @@ merge(L) ->
 %% @private
 merge([], A) ->
     A;
+merge([[] | T], A) ->
+    merge(T, A);
 merge([[{_,_} | _] = H |T], A) ->
     merge(T, lists:foldl(
                fun({K,V}, AA) ->

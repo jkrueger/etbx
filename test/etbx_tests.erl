@@ -104,5 +104,6 @@ index_of_any_test_() ->
 
 merge_test_() ->
     [?_assertEqual([],             etbx:merge([])),
+     ?_assertEqual([{b,2}, {a,1}], etbx:merge([[{a,1}, {b,2}], []])),
      ?_assertEqual([{b,2}, {a,1}], etbx:merge([[{a,1}], [{b,2}]])),
      ?_assertEqual([{b,0}, {a,1}], etbx:merge([[{a,1}, {b,2}], [{b,0}]]))].
