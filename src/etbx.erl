@@ -1,4 +1,4 @@
-%% @author Erick Gonzalez <erick@swellimagination.com>
+%% @author Erick Gonzalez <erick@codemonkeylabs.de>
 %% @doc The ETBX library is a set of Erlang ([http://www.erlang.org]) functions to perform common tasks that are a recurrent theme during development of Erlang applications.
 
 -module(etbx).
