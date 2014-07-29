@@ -18,6 +18,7 @@
 -export([stop_app/1]).
 -export([to_atom/1, to_atom/2]).
 -export([to_binary/1]).
+-export([to_float/1]).
 -export([to_list/1]).
 -export([to_rec/2]).
 -export([to_string/1]).
@@ -247,6 +248,12 @@ to_binary(X) when is_atom(X) ->
     atom_to_binary(X, latin1);
 to_binary(X) when is_binary(X) ->
     X.
+to_float(X) when is_list(X) ->
+    list_to_float(X);
+to_float(X) when is_integer(X) ->
+    to_float(to_string(X));
+to_float(X) when is_binary(X) ->
+    binary_to_float(X).
 to_atom(X) when is_list(X) ->
     list_to_existing_atom(X);
 to_atom(X) when is_binary(X) ->
