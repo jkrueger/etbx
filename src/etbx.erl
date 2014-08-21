@@ -12,6 +12,7 @@
 -export([maybe_apply/3, maybe_apply/4]).
 -export([merge/1]).
 -export([update/3]).
+-export([pretty_stacktrace/0]).
 -export([run/1, run/2, run/3]).
 -export([set_loglevel/1]).
 -export([start_app/1]).
@@ -57,9 +58,10 @@ maybe_apply(Mod, Fun, Args) ->
 %% return the given Return parameter instead
 -spec maybe_apply(module(), function(), list(), any()) -> any().
 maybe_apply(Mod, Fun, Args, Return) ->
-    case catch apply(Mod, Fun, Args) of 
-        {'EXIT', {undef, _}} -> Return;
-        Unknown -> Unknown
+    try
+        apply(Mod, Fun, Args)
+    catch
+        error:undef -> Return
     end.
 
 %% @doc Set lager logging level at runtime. Specify one of debug, info,
@@ -301,3 +303,7 @@ run_loop(Port, Data, Timeout) ->
     after Timeout 
               -> throw(timeout)
     end.
+
+pretty_stacktrace() ->
+    T = erl_syntax:abstract(erlang:get_stacktrace()),
+    erl_prettypr:format(T).
