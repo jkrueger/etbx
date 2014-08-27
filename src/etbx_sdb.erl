@@ -75,3 +75,9 @@ erase(Key, DB) ->
     Filename    = DB#db_obj.filename,
     serialize_db(SerializeFn, Filename, NewDict),
     DB#db_obj{dictionary=NewDict}.
+erase(DB) ->
+    NewDict=orddict:new(),
+    SerializeFn = DB#db_obj.serialize_fn,
+    Filename    = DB#db_obj.filename,
+    serialize_db(SerializeFn, Filename, NewDict),
+    DB#db_obj{dictionary=NewDict}.
