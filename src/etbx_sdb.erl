@@ -9,7 +9,7 @@
 
 -module(etbx_sdb).
 -vsn("1.0.0").
--export([erase/2]).
+-export([erase/2, erase/1]).
 -export([init/3]).
 -export([lookup/2]).
 -export([store/3]).
