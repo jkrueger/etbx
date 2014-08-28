@@ -9,7 +9,7 @@
 
 -module(etbx_sdb).
 -vsn("1.0.0").
--export([erase/2]).
+-export([erase/2, erase/1]).
 -export([init/3]).
 -export([lookup/2]).
 -export([store/3]).
@@ -71,6 +71,12 @@ store(Key, Value, DB) ->
 
 erase(Key, DB) ->
     NewDict     = orddict:erase(Key, DB#db_obj.dictionary),
+    SerializeFn = DB#db_obj.serialize_fn,
+    Filename    = DB#db_obj.filename,
+    serialize_db(SerializeFn, Filename, NewDict),
+    DB#db_obj{dictionary=NewDict}.
+erase(DB) ->
+    NewDict=orddict:new(),
     SerializeFn = DB#db_obj.serialize_fn,
     Filename    = DB#db_obj.filename,
     serialize_db(SerializeFn, Filename, NewDict),
