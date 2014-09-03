@@ -52,7 +52,7 @@ compile(Template0, PlaceholderPattern0) ->
 extract_property(Placeholder, [{Start, _Length}, {SubStart, SubLength}]) ->
     RStart = SubStart - Start,
     <<_:RStart/binary, Field:SubLength/binary, _/binary>> = Placeholder,
-    case etbx:to_binary(string:strip(etbx:to_string(Field), both, $ )) of
+    case etbx:trim(Field) of
         <<$<,$<,$", TBS/binary>> ->
             TBL = erlang:byte_size(TBS)-3,
             <<BP:TBL/binary, _/binary>> = TBS,

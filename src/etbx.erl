@@ -23,6 +23,7 @@
 -export([to_list/1]).
 -export([to_rec/2]).
 -export([to_string/1]).
+-export([trim/1]).
 
 %% @doc Returns one element from the list for which Pred(Elem) is not false.
 %% Kinda like lists:any but instead of returning true, it returns
@@ -189,7 +190,7 @@ update(K, V, [{_,_}|_] = L) ->
 %% the value will be that of the object found last on the list (from left
 %% to right).
 %% Objects can be proplists or dictionaries
--spec merge([proplist()|dict()]) -> proplist() | dict().
+-spec merge([proplist()|dict:dict()]) -> proplist() | dict:dict().
 merge([{dict,_,_,_,_,_,_,_,_} | _] = L) ->
     merge(L, dict:new());
 merge(L) -> 
@@ -307,3 +308,8 @@ run_loop(Port, Data, Timeout) ->
 pretty_stacktrace() ->
     T = erl_syntax:abstract(erlang:get_stacktrace()),
     erl_prettypr:format(T).
+
+trim(<<Bin/binary>>) ->
+    re:replace(Bin, "^\\s+|\\s+$", "", [{return, binary}, global]);
+trim(List) when is_list(List) ->
+    string:strip(List, both, $ ).
