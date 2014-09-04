@@ -39,7 +39,7 @@ compile(Template0, PlaceholderPattern0) ->
                               [PropertyPart |
                                [#est_part{type = chunk, data = Prelude} | Acc]]
                       end,
-                  {NewParts, O + Start + PHL, Epilogue}
+                  {NewParts, Start + PHL, Epilogue}
           end,
           {[], 0, Template},
           Matches),
