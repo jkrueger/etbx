@@ -23,4 +23,15 @@ est_test_() ->
                              {est_part, property, foo}]},
                    etbx_est:compile(<<"%'foo'%%bar%">>, "%(.*)%")),
      ?_assertEqual({est_rec,[{est_part, chunk, <<"hi mom!">>}]},
-                   etbx_est:compile(<<"hi mom!">>))].
+                   etbx_est:compile(<<"hi mom!">>)),
+     ?_assertEqual({est_rec,[{est_part, property, baz},
+                             {est_part, property, bar},
+                             {est_part, chunk, <<"foo">>}]},
+                   etbx_est:compile(<<"foo<'bar'><baz>">>, <<"<(.*)>">>)),
+     ?_assertEqual([<<"foo">>, "bar", <<"baz">>],
+                   etbx_est:render({est_rec,[{est_part, property, baz},
+                                             {est_part, property, bar},
+                                             {est_part, chunk, <<"foo">>}]},
+                                   [{foo, moo},
+                                    {bar, "bar"},
+                                    {baz, <<"baz">>}]))].

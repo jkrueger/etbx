@@ -5,6 +5,7 @@
 -vsn("1.0.0").
 -export([any/2]).
 -export([contains/2]).
+-export([eval/1, eval/2]).
 -export([get_env/1, get_env/2]).
 -export([index_of/2]).
 -export([index_of_any/2]).
@@ -34,6 +35,35 @@ any(Pred, [H | T]) ->
     V = Pred(H),
     if V =:= false -> any(Pred, T);
        true -> V
+    end.
+
+%% @doc Same as eval(Expr, [])
+-spec eval(string()) -> {ok, term(), list()} | {error, any()}.
+eval(Expr) ->
+    eval(Expr, []).
+
+%% @doc Evaluates an Erlang expression
+-spec eval(string(), list()) -> {ok, term(), list()} | {error, any()}.
+eval(Expr0, Bindings) ->
+    ExprBin0 = to_binary(Expr0),
+    Len      = erlang:byte_size(ExprBin0)-1,
+    ExprBin = case ExprBin0 of
+                  <<_:Len/binary, $.>> -> ExprBin0;
+                  Unterminated ->
+                      <<Unterminated/binary, $.>>
+              end,
+    Expr = to_string(ExprBin),
+    case erl_scan:string(Expr) of
+        {ok, Scanned, _} ->
+            case erl_parse:parse_exprs(Scanned) of
+                {ok, Parsed} ->
+                    {value, V, NBindings} = erl_eval:exprs(Parsed, Bindings),
+                    {ok, V, NBindings};
+                E ->
+                    E
+            end;
+        E ->
+            E
     end.
 
 %% @doc Retrieves an Application env setting

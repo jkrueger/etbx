@@ -1,5 +1,6 @@
 -module(etbx_est).
 -export([compile/1, compile/2]).
+-export([render/2]).
 -record(est_part, { type::binary(), data::any() }).
 -record(est_rec,  { parts::list(est_part) }).
 
@@ -52,20 +53,27 @@ compile(Template0, PlaceholderPattern0) ->
 extract_property(Placeholder, [{Start, _Length}, {SubStart, SubLength}]) ->
     RStart = SubStart - Start,
     <<_:RStart/binary, Field:SubLength/binary, _/binary>> = Placeholder,
-    case etbx:trim(Field) of
-        <<$<,$<,$", TBS/binary>> ->
-            TBL = erlang:byte_size(TBS)-3,
-            <<BP:TBL/binary, _/binary>> = TBS,
-            BP;
-        <<$', TAS/binary>> ->
-            TAL = erlang:byte_size(TAS)-1,
-            <<AP:TAL/binary, _/binary>> = TAS,
-            etbx:to_atom(AP, unsafe);
-        <<$", TSS/binary>> ->
-            TSL = erlang:byte_size(TSS)-1,
-            <<SP:TSL/binary, _/binary>> = TSS,
-            etbx:to_string(SP);
-        <<TAS/binary>> ->
-            etbx:to_atom(TAS, unsafe)
+    case etbx:eval(Field) of
+        {ok, Value, _} ->
+            Value;
+        E ->
+            {error, Placeholder, E}
     end.
 
+%% @doc
+%% renders a precompiled template into an iolist using the model provided
+-spec(render(est_rec(), [proplists:property()]) -> iolist()).
+render(Part, Model) when is_record(Part, est_part) ->
+    case Part#est_part.type of
+        chunk ->
+            Part#est_part.data;
+        property ->
+            proplists:get_value(Part#est_part.data, Model)
+    end;
+render(Template, Model) ->
+    lists:foldl(
+      fun(Part, A) ->
+              [ render(Part, Model) | A ]
+      end,
+      [],
+      Template#est_rec.parts).
