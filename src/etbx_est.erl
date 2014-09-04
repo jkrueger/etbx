@@ -62,18 +62,24 @@ extract_property(Placeholder, [{Start, _Length}, {SubStart, SubLength}]) ->
 
 %% @doc
 %% renders a precompiled template into an iolist using the model provided
--spec(render(est_rec(), [proplists:property()]) -> iolist()).
-render(Part, Model) when is_record(Part, est_part) ->
+-spec(render(est_rec(), [proplists:property()], any()) -> iolist()).
+render(Part, Model, DefVal) when is_record(Part, est_part) ->
     case Part#est_part.type of
         chunk ->
             Part#est_part.data;
         property ->
-            proplists:get_value(Part#est_part.data, Model)
+            proplists:get_value(Part#est_part.data, Model, DefVal)
     end;
-render(Template, Model) ->
+render(Template, Model, DefVal) ->
     lists:foldl(
       fun(Part, A) ->
-              [ render(Part, Model) | A ]
+              [ render(Part, Model, DefVal) | A ]
       end,
       [],
       Template#est_rec.parts).
+
+%% @doc
+%% Same as render(Template, Model, <<"undefined">>)
+-spec(render(est_rec(), [proplists:property()]) -> iolist()).
+render(Template, Model) ->
+    render(Template, Model, <<"undefined">>).
