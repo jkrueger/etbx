@@ -7,6 +7,7 @@
 -export([contains/2]).
 -export([eval/1, eval/2]).
 -export([get_env/1, get_env/2]).
+-export([get_value/2, get_value/3]).
 -export([index_of/2]).
 -export([index_of_any/2]).
 -export([is_nil/0, is_nil/1]).
@@ -15,6 +16,7 @@
 -export([update/3]).
 -export([pretty_stacktrace/0]).
 -export([run/1, run/2, run/3]).
+-export([select/2]).
 -export([set_loglevel/1]).
 -export([start_app/1]).
 -export([stop_app/1]).
@@ -343,3 +345,48 @@ trim(<<Bin/binary>>) ->
     re:replace(Bin, "^\\s+|\\s+$", "", [{return, binary}, global]);
 trim(List) when is_list(List) ->
     string:strip(List, both, $ ).
+
+%% @doc same as get_value(K, O, undefined)
+-spec get_value(any(), map() | proplist()) -> any() | undefined.
+get_value(K, O) ->
+    get_value(K, O, undefined).
+
+%% @doc looks up key in an associative structure. If no value for that key
+%% is found, it returns the passed in default parameter
+-spec get_value(any(), map() | proplist(), any()) -> any().
+get_value(K, O, D) when is_map(O) ->
+    maps:get(K, O, D);
+get_value(K, O, D) when is_list(O) ->
+    proplists:get_value(K, O, D);    
+get_value(_, _, D) ->
+    D.
+
+%% @doc returns an associative structure of the same passed in type containing
+%% only key/value pairs for keys present in the list provided
+-spec select(map() | proplist(), list()) -> map() | proplist.
+select(O, L) when is_map(O) ->
+    lists:foldl(
+      fun(K, A) -> 
+              try
+                  maps:put(K, maps:get(K, O), A)
+              catch 
+                  error:bad_key ->
+                      A
+              end
+      end,
+      #{}, L);
+select(O, L) when is_list(O) ->
+    lists:foldl(
+      fun(K, A) ->
+              case proplists:get_value(K, O, '_etbx_no_value_') of
+                  '_etbx_no_value_' ->
+                      A;
+                  V ->
+                      update(K, V, A)
+              end
+      end, [], L);
+select(_, _) ->
+    throw (badarg).
+
+              
+    

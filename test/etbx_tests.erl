@@ -107,3 +107,23 @@ merge_test_() ->
      ?_assertEqual([{b,2}, {a,1}], etbx:merge([[{a,1}, {b,2}], []])),
      ?_assertEqual([{b,2}, {a,1}], etbx:merge([[{a,1}], [{b,2}]])),
      ?_assertEqual([{b,0}, {a,1}], etbx:merge([[{a,1}, {b,2}], [{b,0}]]))].
+
+get_value_test_() ->
+    [?_assertEqual(foo, etbx:get_value(bar, #{bar => foo})),
+     ?_assertEqual(foo, etbx:get_value(bar, [{bar, foo}])),
+     ?_assertEqual(baz, etbx:get_value(foo, #{bar => foo}, baz))].
+
+select_test_() ->
+    [?_assertEqual(#{foo => 1, bar => 2}, 
+                   etbx:select(#{ foo => 1, bar => 2, baz => 3},
+                               [foo, bar])),
+     ?_assertEqual(#{},
+                   etbx:select(#{ foo => 1, bar => 2, baz => 3}, [])),
+     ?_assertEqual(#{},
+                   etbx:select(#{ foo => 1, bar => 2, baz => 3}, [moo, choo])),
+     ?_assertEqual([{bar, 2}, {foo, 1}], 
+                   etbx:select([{foo, 1}, {bar, 2}, {baz, 3}], 
+                               [foo, bar])),
+     ?_assertEqual([],
+                   etbx:select([{foo, 1}, {bar, 2}, {baz, 3}],
+                               [moo, choo]))].
