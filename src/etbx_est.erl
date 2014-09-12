@@ -68,7 +68,14 @@ render(Part, Model, DefVal) when is_record(Part, est_part) ->
         chunk ->
             Part#est_part.data;
         property ->
-            proplists:get_value(Part#est_part.data, Model, DefVal)
+            case etbx:get_value(Part#est_part.data, Model, DefVal) of
+                N when is_binary(N) ->
+                    N;
+                N when is_list(N) ->
+                    N;
+                N ->
+                    etbx:to_string(N)
+            end
     end;
 render(Template, Model, DefVal) ->
     lists:foldl(

@@ -338,8 +338,14 @@ run_loop(Port, Data, Timeout) ->
     end.
 
 pretty_stacktrace() ->
-    T = erl_syntax:abstract(erlang:get_stacktrace()),
-    erl_prettypr:format(T).
+    Trace = erlang:get_stacktrace(),
+    try
+        T = erl_syntax:abstract(Trace),
+        erl_prettypr:format(T)
+    catch
+        error:_ ->
+            io_lib:format("~p", [Trace])
+    end.
 
 trim(<<Bin/binary>>) ->
     re:replace(Bin, "^\\s+|\\s+$", "", [{return, binary}, global]);
@@ -387,6 +393,3 @@ select(O, L) when is_list(O) ->
       end, [], L);
 select(_, _) ->
     throw (badarg).
-
-              
-    
