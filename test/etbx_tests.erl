@@ -33,6 +33,8 @@ index_of_test_() ->
 to_rec_test_() ->
     [?_assertEqual(#frob{foo="foo", bar="bar", baz="baz"}, 
                    etbx:to_rec(?RECSPEC(frob), [{baz, "baz"}, {foo, "foo"}])),
+     ?_assertEqual(#frob{foo="foo", bar="bar", baz="baz"}, 
+                   etbx:to_rec(?RECSPEC(frob), [{"baz", "baz"}, {<<"foo">>, "foo"}])),
      ?_assertEqual(#frob{},
                    etbx:to_rec(?RECSPEC(frob), [])),
      ?_assertEqual(#frob{},

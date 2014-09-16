@@ -185,7 +185,7 @@ to_rec({R, [_ | N], Spec}, P) when is_atom(R) and is_list(Spec) ->
     list_to_tuple(
       [R | lists:foldl(
              fun ({K,V}, A) ->
-                     case index_of(K, Spec) of
+                     case index_of(etbx:to_atom(K, unsafe), Spec) of
                          undefined -> 
                              A;
                          I -> 
