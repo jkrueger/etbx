@@ -15,6 +15,7 @@
 -export([merge/1]).
 -export([update/3]).
 -export([pretty_stacktrace/0]).
+-export([remap/2]).
 -export([run/1, run/2, run/3]).
 -export([select/2]).
 -export([set_loglevel/1]).
@@ -393,3 +394,15 @@ select(O, L) when is_list(O) ->
       end, [], L);
 select(_, _) ->
     throw (badarg).
+
+%% @doc given a function F and a property list P, apply F to the values of the
+%% property list possibly recursing into nested property lists.
+-spec remap(fun(), proplist()) -> proplist().
+remap(F, [{_,_} | _] = P) ->
+    lists:map(
+      fun({K, V}) ->
+              {K, remap(F, V)}
+      end,
+      P);
+remap(F, V) ->
+    F(V).

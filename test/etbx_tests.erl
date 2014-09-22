@@ -129,3 +129,13 @@ select_test_() ->
      ?_assertEqual([],
                    etbx:select([{foo, 1}, {bar, 2}, {baz, 3}],
                                [moo, choo]))].
+
+remap_test_() ->
+    [?_assertEqual([{foo, 1}, {bar, [{baz, 2}]}],
+                   etbx:remap(fun(X) -> X + 1 end, 
+                              [{foo, 0}, {bar, [{baz, 1}]}])),
+     ?_assertEqual([],
+                   etbx:remap(fun(X) -> X end, [])),
+     ?_assertEqual([{foo, 1}, {bar, 2}],
+                   etbx:remap(fun(X) -> X + 1 end,
+                              [{foo, 0}, {bar, 1}]))].
