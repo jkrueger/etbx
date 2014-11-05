@@ -232,6 +232,8 @@ merge(L) ->
 %% @private
 merge([], A) ->
     A;
+merge([undefined | T], A) ->
+    merge(T, A);
 merge([[] | T], A) ->
     merge(T, A);
 merge([[{_,_} | _] = H |T], A) ->
