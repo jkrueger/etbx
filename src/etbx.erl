@@ -6,6 +6,7 @@
 -export([any/2]).
 -export([contains/2]).
 -export([eval/1, eval/2]).
+-export([expand/2, expand/3]).
 -export([get_env/1, get_env/2]).
 -export([get_value/2, get_value/3]).
 -export([index_of/2]).
@@ -27,6 +28,7 @@
 -export([to_list/1]).
 -export([to_rec/2]).
 -export([to_string/1]).
+-export([to_tuple/1]).
 -export([trim/1]).
 
 %% @doc Returns one element from the list for which Pred(Elem) is not false.
@@ -309,6 +311,9 @@ to_atom(X, unsafe) when is_number(X) ->
 to_atom(X, unsafe) when is_atom(X) ->
     X.
 
+to_tuple(X) when is_list(X) ->
+    list_to_tuple(X).
+
 %%%=========================================================================
 %%% Running Shell Commands
 %%%=========================================================================
@@ -408,3 +413,26 @@ remap(F, [{_,_} | _] = P) ->
       P);
 remap(F, V) ->
     F(V).
+
+%% @doc same as expand(M, T, 10)
+-spec expand(proplist() | map(), any()) -> any().
+expand(M, T) ->
+    expand(M, T, 10).
+
+%% @doc given an associative structure M any term T and an integer N, 
+%% it expands up to N times recursively all terms found in T which map to an
+%% expression in M. 
+-spec expand(proplist() | map(), any(), integer()) -> any().
+expand(_, T, 0) ->
+    throw({too_many_expansions, T});
+expand(M, T, N) when is_list(T) ->
+    [ expand(M, X, N) || X <- T ];
+expand(M, T, N) when is_tuple(T) ->
+    to_tuple(expand(M, to_list(T), N));
+expand(M, T, N) ->
+    case get_value(T, M, '_n/a_') of
+        '_n/a_' ->
+            T;
+        NT ->
+            expand(M, NT, N-1)
+    end.

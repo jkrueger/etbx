@@ -139,3 +139,16 @@ remap_test_() ->
      ?_assertEqual([{foo, 1}, {bar, 2}],
                    etbx:remap(fun(X) -> X + 1 end,
                               [{foo, 0}, {bar, 1}]))].
+
+expand_test_() ->
+    [?_assertEqual([{a, 
+                     [{2, 1}, 1, 2],
+                     {[{b, 1}, {c, 2}]}}],
+                   etbx:expand([{foo, 1}, {bar, 2}, {baz, foo}],
+                               [{a, 
+                                 [{bar, foo}, foo, bar],
+                                 {[{b, baz}, {c, bar}]}}])),
+     ?_assertException(throw, {too_many_expansions, _},
+                       etbx:expand([{foo, [{bar, 2}]}, 
+                                    {bar, {[{foo, 1}]}}],
+                                   foo))].
