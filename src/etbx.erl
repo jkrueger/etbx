@@ -15,11 +15,13 @@
 -export([maybe_apply/3, maybe_apply/4]).
 -export([merge/1]).
 -export([update/3]).
+-export([partition/2]).
 -export([pretty_stacktrace/0]).
 -export([remap/2]).
 -export([run/1, run/2, run/3]).
 -export([select/2]).
 -export([set_loglevel/1]).
+-export([split/2]).
 -export([start_app/1]).
 -export([stop_app/1]).
 -export([to_atom/1, to_atom/2]).
@@ -436,3 +438,30 @@ expand(M, T, N) ->
         NT ->
             expand(M, NT, N-1)
     end.
+
+%% @doc basically lists:split without the mental retardation.
+-spec split(integer(), list()) -> {list(), list()}.
+split(0, {L1, L2}) ->
+    {lists:reverse(L1), L2};
+split(_, {L1, []}) ->
+    {lists:reverse(L1), []};
+split(N, {L1, [H | T]}) ->
+    split(N-1, {[H | L1], T});
+split(N, L) when is_list(L) ->
+    split(N, {[], L}).
+
+%% @doc Split a list into mmultiple lists of n items each. The last partition
+%% will contain less than n elements if the length of the list is not a multiple
+%% of n
+-spec partition(integer(), list()) -> [list()].
+partition(0, _) ->
+    [];
+partition(N, L) ->
+    partition(N, L, []).
+
+partition(_, [], A) ->
+    lists:reverse(A);
+partition(N, L, A) ->
+    { P, Rest} = split(N, L),
+    partition(N, Rest, [P | A]).
+    

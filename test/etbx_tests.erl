@@ -152,3 +152,16 @@ expand_test_() ->
                        etbx:expand([{foo, [{bar, 2}]}, 
                                     {bar, {[{foo, 1}]}}],
                                    foo))].
+
+split_test_() ->
+    [?_assertEqual({[], [a, b, c]}, etbx:split(0, [a, b, c])),
+     ?_assertEqual({[], []},        etbx:split(3, [])),
+     ?_assertEqual({[a, b, c], []}, etbx:split(4, [a, b, c])),
+     ?_assertEqual({[a, b], [c]},   etbx:split(2, [a, b, c]))].
+
+partition_test_() ->
+    [?_assertEqual([], etbx:partition(3, [])),
+     ?_assertEqual([], etbx:partition(0, [a, b, c])),
+     ?_assertEqual([[a, b], [c, d]], etbx:partition(2, [a, b, c, d])),
+     ?_assertEqual([[a, b, c], [d]], etbx:partition(3, [a, b, c, d])),
+     ?_assertEqual([[a, b, c, d]],   etbx:partition(4, [a, b, c, d]))].
