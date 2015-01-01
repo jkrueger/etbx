@@ -15,6 +15,7 @@
 -export([maybe_apply/3, maybe_apply/4]).
 -export([merge/1]).
 -export([update/3]).
+-export([pad/3]).
 -export([partition/2]).
 -export([pretty_stacktrace/0]).
 -export([remap/2]).
@@ -450,7 +451,7 @@ split(N, {L1, [H | T]}) ->
 split(N, L) when is_list(L) ->
     split(N, {[], L}).
 
-%% @doc Split a list into mmultiple lists of n items each. The last partition
+%% @doc Split a list into multiple lists of n items each. The last partition
 %% will contain less than n elements if the length of the list is not a multiple
 %% of n
 -spec partition(integer(), list()) -> [list()].
@@ -464,4 +465,21 @@ partition(_, [], A) ->
 partition(N, L, A) ->
     { P, Rest} = split(N, L),
     partition(N, Rest, [P | A]).
+
+%% @doc if the length of the list L is less than N, pad the list
+%% with the provided padding term P
+-spec pad(integer(), list(), any()) -> list().
+pad(N, L, P) when length(L) < N ->
+    pad(N, reverse, lists:reverse(L), P);
+pad(_, L, _)  ->
+    L.
+
+pad(N, reverse, L, P) when length(L) < N ->
+    pad(N, reverse, [P | L], P);
+pad(_, reverse, L, _) ->
+    lists:reverse(L).
+
+    
+
+    
     

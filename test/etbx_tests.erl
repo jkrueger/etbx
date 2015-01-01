@@ -165,3 +165,7 @@ partition_test_() ->
      ?_assertEqual([[a, b], [c, d]], etbx:partition(2, [a, b, c, d])),
      ?_assertEqual([[a, b, c], [d]], etbx:partition(3, [a, b, c, d])),
      ?_assertEqual([[a, b, c, d]],   etbx:partition(4, [a, b, c, d]))].
+
+pad_test_() ->
+    [?_assertEqual([foo, bar, baz], etbx:pad(3, [foo, bar], baz)),
+     ?_assertEqual([foo, bar, baz], etbx:pad(3, [foo, bar, baz], cho))].
