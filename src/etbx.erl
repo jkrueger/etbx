@@ -28,6 +28,7 @@
 -export([to_atom/1, to_atom/2]).
 -export([to_binary/1]).
 -export([to_float/1]).
+-export([to_hex/1]).
 -export([to_list/1]).
 -export([to_rec/2]).
 -export([to_string/1]).
@@ -479,7 +480,9 @@ pad(N, reverse, L, P) when length(L) < N ->
 pad(_, reverse, L, _) ->
     lists:reverse(L).
 
-    
+to_hex(Bits) ->
+    Token     = << << (integer_to_binary(X,16))/binary>> || <<X:4>> <= Bits >>,
+    string:to_lower(etbx:to_list(Token)).
 
     
     
