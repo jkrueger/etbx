@@ -7,6 +7,7 @@
 -export([contains/2]).
 -export([eval/1, eval/2]).
 -export([expand/2, expand/3]).
+-export([first/1]).
 -export([get_env/1, get_env/2]).
 -export([get_value/2, get_value/3]).
 -export([index_of/2]).
@@ -185,6 +186,17 @@ index_of_any([H | T], L) ->
             index_of_any(T, L);
         I -> I
      end.                          
+
+%% @doc returns the first element of the specified list, tuple or binary
+-spec first(list() | tuple() | binary()) -> any().
+first(<<E, _/binary>>) ->
+    E;
+first([E | _]) ->
+    E;
+first(T) when is_tuple(T) ->
+    element(1, T);
+first(_) ->
+    throw(badarg).
     
 %% @doc converts a property list into a record.
 -spec to_rec(recspec(), proplist()) -> record().
