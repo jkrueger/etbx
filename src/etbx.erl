@@ -270,10 +270,10 @@ merge_with(F, L) ->
 
 merge_with(_, [], A) ->
     A;
-merge_with(_, [undefined | T], A) ->
-    merge_with(T | A);
-merge_with(_, [[] | T], A) ->
-    merge_with(T, A);
+merge_with(F, [undefined | T], A) ->
+    merge_with(F, T, A);
+merge_with(F, [[] | T], A) ->
+    merge_with(F, T, A);
 merge_with(F, [[{_,_} | _] = L | T], A) ->
     merge_with(
       F, T, 
