@@ -68,7 +68,7 @@ render(Part, Model, DefVal) when is_record(Part, est_part) ->
         chunk ->
             Part#est_part.data;
         property ->
-            case etbx:get_value(Part#est_part.data, Model, DefVal) of
+            case etbx:get_in(Part#est_part.data, Model, DefVal) of
                 N when is_binary(N) ->
                     N;
                 N when is_list(N) ->
