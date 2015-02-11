@@ -10,11 +10,13 @@
 -export([first/1]).
 -export([get_env/1, get_env/2]).
 -export([get_value/2, get_value/3]).
+-export([get_in/3]).
 -export([index_of/2]).
 -export([index_of_any/2]).
 -export([is_nil/0, is_nil/1]).
 -export([maybe_apply/3, maybe_apply/4]).
 -export([merge/1]).
+-export([merge_with/2]).
 -export([update/3]).
 -export([pad/3]).
 -export([partition/2]).
@@ -243,7 +245,7 @@ update(K, V, [{_,_}|_] = L) ->
 %% Objects can be proplists or dictionaries
 -spec merge([proplist()|dict:dict()]) -> proplist() | dict:dict().
 merge([{dict,_,_,_,_,_,_,_,_} | _] = L) ->
-    merge(L, dict:new());
+    merge_with(fun(_, _, V) -> V end, L);
 merge(L) -> 
     merge(L, []).
 
@@ -259,14 +261,32 @@ merge([[{_,_} | _] = H |T], A) ->
                fun({K,V}, AA) ->
                        update(K, V, AA)
                end,
-               A, H));
-merge([{dict,_,_,_,_,_,_,_,_} = H | T], A) ->
-    merge(T, dict:merge(
-               fun(_, _, V) ->
-                       V
-               end,
                A, H)).
-               
+
+merge_with(F, [{dict,_,_,_,_,_,_,_,_} | _] = L) ->
+    merge_with(F, L, dict:new());
+merge_with(F, L) ->
+    merge_with(F, L, []).
+
+merge_with(_, [], A) ->
+    A;
+merge_with(F, [[{_,_} | _] = L | T], A) ->
+    merge_with(
+      F, T, 
+      lists:foldl(
+        fun({K, V}, S) ->
+            update(
+              K,
+              case get_value(K, S) of
+                  undefined -> V;
+                  V2 ->        F(K, V, V2)
+              end,
+              S)
+        end,
+        A, L));
+merge_with(F, [{dict,_,_,_,_,_,_,_,_} = D | T], A) ->
+    merge_with(F, T, dict:merge(F, D, A)).
+
 %%%=========================================================================
 %%% Type conversion
 %%%=========================================================================
@@ -390,6 +410,16 @@ get_value(K, O, D) when is_list(O) ->
     proplists:get_value(K, O, D);    
 get_value(_, _, D) ->
     D.
+
+%% @doc Recursively look up a value in an associative structure
+get_in([], D, D) ->
+    D;
+get_in([], O, _) ->
+    O;
+get_in([K | KS], O, D) ->
+    get_in(KS, get_value(K, O, D), D);
+get_in(K, O, D) ->
+    get_value(K, O, D).
 
 %% @doc returns an associative structure of the same passed in type containing
 %% only key/value pairs for keys present in the list provided
