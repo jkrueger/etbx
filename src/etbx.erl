@@ -3,21 +3,22 @@
 
 -module(etbx).
 -vsn("1.0.0").
+
 -export([any/2]).
 -export([contains/2]).
+-export([delete/2]).
 -export([eval/1, eval/2]).
 -export([expand/2, expand/3]).
 -export([first/1]).
 -export([get_env/1, get_env/2]).
--export([get_value/2, get_value/3]).
 -export([get_in/3]).
+-export([get_value/2, get_value/3]).
 -export([index_of/2]).
 -export([index_of_any/2]).
 -export([is_nil/0, is_nil/1]).
 -export([maybe_apply/3, maybe_apply/4]).
 -export([merge/1]).
 -export([merge_with/2]).
--export([update/3]).
 -export([pad/3]).
 -export([partition/2]).
 -export([pretty_stacktrace/0]).
@@ -37,6 +38,7 @@
 -export([to_string/1]).
 -export([to_tuple/1]).
 -export([trim/1]).
+-export([update/3]).
 
 %% @doc Returns one element from the list for which Pred(Elem) is not false.
 %% Kinda like lists:any but instead of returning true, it returns
@@ -231,12 +233,23 @@ contains(X, [H | T]) ->
        true    -> contains(X, T)
     end.
 
-%% @doc update property K with value V in proplist L
--spec update(any(), any(), proplist()) -> proplist().
+%% @doc update property K with value V in an associate structure
+-spec update(any(), any(), proplist() | map()) -> proplist() | map().
 update(K, V, []) ->
     [{K,V}];
 update(K, V, [{_,_}|_] = L) ->
-    [{K, V} | proplists:delete(K, L)].
+    [{K, V} | proplists:delete(K, L)];
+update(K, V, M) when is_map(M) ->
+    maps:put(K, V, M).
+
+%% @doc delete property K from associative structure
+-spec delete(any(), proplist() | map()) -> proplist() | map().
+delete(_, []) ->
+    [];
+delete(K, [{_, _} | _] = L) ->
+    proplists:delete(K, L);
+delete(K, M) when is_map(M) ->
+    maps:remove(K, M).
 
 %% @doc merge objects in list L. It returns a single object with
 %% all the merged values. If a key is present in the list more than once,
