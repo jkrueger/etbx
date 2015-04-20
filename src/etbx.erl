@@ -239,6 +239,8 @@ update(K, V, []) ->
     [{K,V}];
 update(K, V, [{_,_}|_] = L) ->
     [{K, V} | proplists:delete(K, L)];
+update(K, V, {L}) when is_list(L) ->
+    update(K, V, L);
 update(K, V, M) when is_map(M) ->
     maps:put(K, V, M).
 
@@ -248,6 +250,8 @@ delete(_, []) ->
     [];
 delete(K, [{_, _} | _] = L) ->
     proplists:delete(K, L);
+delete(K, {L}) when is_list(L) ->
+    delete(K, L);
 delete(K, M) when is_map(M) ->
     maps:remove(K, M).
 
@@ -269,6 +273,8 @@ merge([undefined | T], A) ->
     merge(T, A);
 merge([[] | T], A) ->
     merge(T, A);
+merge([{H} | T], A) ->
+    merge([H | T], A);
 merge([[{_,_} | _] = H |T], A) ->
     merge(T, lists:foldl(
                fun({K,V}, AA) ->
@@ -424,7 +430,9 @@ get_value(K, O) ->
 get_value(K, O, D) when is_map(O) ->
     maps:get(K, O, D);
 get_value(K, O, D) when is_list(O) ->
-    proplists:get_value(K, O, D);    
+    proplists:get_value(K, O, D);
+get_value(K, {O}, D) when is_list(O) -> 
+    proplists:get_value(K, O, D);
 get_value(_, _, D) ->
     D.
 
