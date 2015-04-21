@@ -60,7 +60,9 @@ update_test_() ->
      ?_assertEqual(etbx:update(foo, "foo", []),
                    [{foo, "foo"}]),
      ?_assertEqual(etbx:update(foo, "foo", [{bar, "bar"}]),
-                   [{foo, "foo"}, {bar, "bar"}])].
+                   [{foo, "foo"}, {bar, "bar"}]),
+     ?_assertEqual(etbx:update(foo, "foo", {[{bar, "bar"}]}),
+                   {[{foo, "foo"}, {bar, "bar"}]})].
      
 to_list_test_() ->
     [?_assertEqual(etbx:to_list(<<"foo">>),       "foo"),
@@ -105,10 +107,12 @@ index_of_any_test_() ->
      ?_assertEqual(undefined, etbx:index_of_any([foo], [baz, bar]))].
 
 merge_test_() ->
-    [?_assertEqual([],             etbx:merge([])),
-     ?_assertEqual([{b,2}, {a,1}], etbx:merge([[{a,1}, {b,2}], []])),
-     ?_assertEqual([{b,2}, {a,1}], etbx:merge([[{a,1}], [{b,2}]])),
-     ?_assertEqual([{b,0}, {a,1}], etbx:merge([[{a,1}, {b,2}], [{b,0}]]))].
+    [?_assertEqual([],               etbx:merge([])),
+     ?_assertEqual([{b,2}, {a,1}],   etbx:merge([[{a,1}, {b,2}], []])),
+     ?_assertEqual([{b,2}, {a,1}],   etbx:merge([[{a,1}], [{b,2}]])),
+     ?_assertEqual([{b,0}, {a,1}],   etbx:merge([[{a,1}, {b,2}], [{b,0}]])),
+     ?_assertEqual({[{b,0}, {a,1}]}, etbx:merge([{[{a,1}, {b,2}]}, 
+                                                 {[{b,0}]}]))].
 
 get_value_test_() ->
     [?_assertEqual(foo, etbx:get_value(bar, #{bar => foo})),

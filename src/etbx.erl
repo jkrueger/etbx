@@ -240,7 +240,7 @@ update(K, V, []) ->
 update(K, V, [{_,_}|_] = L) ->
     [{K, V} | proplists:delete(K, L)];
 update(K, V, {L}) when is_list(L) ->
-    update(K, V, L);
+    {update(K, V, L)};
 update(K, V, M) when is_map(M) ->
     maps:put(K, V, M).
 
@@ -251,7 +251,7 @@ delete(_, []) ->
 delete(K, [{_, _} | _] = L) ->
     proplists:delete(K, L);
 delete(K, {L}) when is_list(L) ->
-    delete(K, L);
+    {delete(K, L)};
 delete(K, M) when is_map(M) ->
     maps:remove(K, M).
 
@@ -273,14 +273,19 @@ merge([undefined | T], A) ->
     merge(T, A);
 merge([[] | T], A) ->
     merge(T, A);
-merge([{H} | T], A) ->
-    merge([H | T], A);
-merge([[{_,_} | _] = H |T], A) ->
-    merge(T, lists:foldl(
-               fun({K,V}, AA) ->
-                       update(K, V, AA)
-               end,
-               A, H)).
+merge([H | T], A) ->
+    merge(T, merge_properties(H, A)).
+
+merge_properties({H}, {A}) ->
+    {merge_properties(H, A)};
+merge_properties({H}, A) ->
+    {merge_properties(H, A)};
+merge_properties(H, A) ->
+    lists:foldl(
+      fun({K,V}, AA) ->
+              update(K, V, AA)
+      end,
+      A, H).
 
 merge_with(F, [{dict,_,_,_,_,_,_,_,_} | _] = L) ->
     merge_with(F, L, dict:new());
