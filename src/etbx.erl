@@ -7,6 +7,7 @@
 -export([any/2]).
 -export([contains/2]).
 -export([delete/2]).
+-export([doall/1]).
 -export([eval/1, eval/2]).
 -export([expand/2, expand/3]).
 -export([first/1]).
@@ -23,12 +24,15 @@
 -export([partition/2]).
 -export([pretty_stacktrace/0]).
 -export([remap/2]).
+-export([range/0, range/1, range/2, range/3]).
 -export([run/1, run/2, run/3]).
 -export([select/2]).
 -export([set_loglevel/1]).
+-export([seq/1, seq/2]).
 -export([split/2]).
 -export([start_app/1]).
 -export([stop_app/1]).
+-export([take/2]).
 -export([to_atom/1, to_atom/2]).
 -export([to_binary/1]).
 -export([to_float/1]).
@@ -556,5 +560,60 @@ to_hex(Bits) ->
     Token     = << << (integer_to_binary(X,16))/binary>> || <<X:4>> <= Bits >>,
     string:to_lower(etbx:to_list(Token)).
 
+%%%=========================================================================
+%%% (Lazy) sequences
+%%%=========================================================================
+
+seq(List) when is_list(List) ->
+    List.
+
+seq(Generator, State) ->
+    {Generator, State}.
+
+take(N, Seq) ->
+    take(N, Seq, []).
+
+take(N, Seq, Acc) when N=:=0 orelse Seq=:=[] ->
+    lists:reverse(Acc);
+take(N, [H|T], Acc) ->
+    take(N-1, T, [H | Acc]);
+take(N, {Generator, State}, Acc) when is_function(Generator) ->
+    {Value, NState} = Generator(State),
+    {Seq, NAcc} = case Value of
+                      undefined ->
+                          {[], Acc};
+                      _ ->
+                          {{Generator, NState}, [Value|Acc]}
+                  end,
+    take(N-1, Seq, NAcc).
+
+range() ->
+    range(0).
     
-    
+range(Min) ->
+    {fun(Last) -> {Last, Last + 1} end, Min}.
+
+range(Min, Max) when is_integer(Min), is_integer(Max) ->
+    range(Min, Max, 1).
+
+range(Min, Max, Step) when is_integer(Min), is_integer(Max), is_integer(Step) -> 
+    {fun(Last) when Last >= Max -> {undefined, Last};
+      (Last) -> {Last, Last+Step}
+     end, Min}.
+
+doall(Seq) ->
+    doall(Seq, []).
+
+doall([], Acc) ->
+    lists:reverse(Acc);
+doall(List, []) when is_list(List) ->
+    doall([], List);
+doall({Generator, State}, Acc) ->
+    {Value, NState} = Generator(State),
+    {Seq, NAcc} = case Value of
+                      undefined ->
+                          {[], Acc};
+                        _ ->
+                          {{Generator, NState}, [Value | Acc]}
+                  end,
+    doall(Seq, NAcc).
