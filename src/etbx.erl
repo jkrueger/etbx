@@ -17,6 +17,7 @@
 -export([index_of/2]).
 -export([index_of_any/2]).
 -export([is_nil/0, is_nil/1]).
+-export([if_nil/2]).
 -export([maybe_apply/3, maybe_apply/4]).
 -export([merge/1]).
 -export([merge_with/2]).
@@ -165,6 +166,17 @@ is_nil({})        -> true;
 is_nil(<<>>)      -> true;
 is_nil(_)         -> false.
 is_nil()          -> true.
+
+
+%% @doc checks if value is_nil and returns the given default value if it is
+-spec if_nil(any(), any()) -> any().
+if_nil(V, D) ->
+    IsNil = is_nil(V),
+    if IsNil ->
+            D;
+       true ->
+            V
+    end.
 
 -type recspec()::tuple().
 -type proplist()::list(tuple()).
