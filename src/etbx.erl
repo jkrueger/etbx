@@ -325,7 +325,7 @@ merge_with(F, [[{_,_} | _] = L | T], A) ->
               K,
               case get_value(K, S) of
                   undefined -> V;
-                  V2 ->        F(K, V, V2)
+                  V2 ->        F(K, V2, V)
               end,
               S)
         end,
