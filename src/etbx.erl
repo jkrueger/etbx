@@ -305,6 +305,8 @@ merge_properties(H, A) ->
 
 merge_with(F, [{dict,_,_,_,_,_,_,_,_} | _] = L) ->
     merge_with(F, L, dict:new());
+merge_with(F, [{OL} | _] = L) when is_list(OL) ->
+    merge_with(F, L, {[]});
 merge_with(F, L) ->
     merge_with(F, L, []).
 
