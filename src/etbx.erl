@@ -314,6 +314,8 @@ merge_with(F, [undefined | T], A) ->
     merge_with(F, T, A);
 merge_with(F, [[] | T], A) ->
     merge_with(F, T, A);
+merge_with(F, [{[{_,_} | _] = L} | T], A) ->
+    merge_with(F, [L | T], A);
 merge_with(F, [[{_,_} | _] = L | T], A) ->
     merge_with(
       F, T, 
