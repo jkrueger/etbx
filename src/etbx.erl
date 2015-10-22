@@ -18,6 +18,7 @@
 -export([index_of_any/2]).
 -export([is_nil/0, is_nil/1]).
 -export([if_nil/2]).
+-export([every_fun/1, some_fun/1]).
 -export([maybe_apply/3, maybe_apply/4]).
 -export([merge/1]).
 -export([merge_with/2]).
@@ -176,6 +177,30 @@ if_nil(V, D) ->
             D;
        true ->
             V
+    end.
+
+%% @doc returns a function that checks if all of the predicates in a list
+%% evaluate to true, given a parameter X
+-spec every_fun(list()) -> function().
+every_fun(Preds) ->
+    fun(X) ->
+      lists:all(
+        fun(Pred) ->
+            Pred(X)
+        end,
+        Preds)
+    end.
+
+%% @doc returns a function that checks if any of the predicates in a list
+%% evaluate to true, given a parameter X
+-spec some_fun(list()) -> function().
+some_fun(Preds) ->
+    fun(X) ->
+      lists:any(
+        fun(Pred) ->
+            Pred(X)
+        end,
+        Preds)
     end.
 
 -type recspec()::tuple().
