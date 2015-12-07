@@ -11,6 +11,14 @@ maybe_apply_test_() ->
     [?_assertEqual(foo,       etbx:maybe_apply(?MODULE, foo, [])),
      ?_assertEqual(undefined, etbx:maybe_apply(?MODULE, bar, []))].
 
+safe_apply_test_() ->
+    [?_assertEqual(undefined, etbx:safe_apply(?MODULE, bar, [])),
+     ?_assertEqual(default,   etbx:safe_apply(?MODULE, bar, [], default)),
+     ?_assertEqual(foo,       etbx:safe_apply(?MODULE, foo, [])),
+     ?_assertEqual(2,         etbx:safe_apply(erlang, length, [[1,2]])),
+     ?_assertNotEqual(default,etbx:safe_apply(math, cos, [1], default))
+    ].
+
 is_nil_test_() ->
     [?_assert(etbx:is_nil("")),
      ?_assert(etbx:is_nil([])),
