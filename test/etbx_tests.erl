@@ -11,12 +11,19 @@ maybe_apply_test_() ->
     [?_assertEqual(foo,       etbx:maybe_apply(?MODULE, foo, [])),
      ?_assertEqual(undefined, etbx:maybe_apply(?MODULE, bar, []))].
 
-safe_apply_test_() ->
-    [?_assertEqual(undefined, etbx:safe_apply(?MODULE, bar, [])),
-     ?_assertEqual(default,   etbx:safe_apply(?MODULE, bar, [], default)),
-     ?_assertEqual(foo,       etbx:safe_apply(?MODULE, foo, [])),
-     ?_assertEqual(2,         etbx:safe_apply(erlang, length, [[1,2]])),
-     ?_assertNotEqual(default,etbx:safe_apply(math, cos, [1], default))
+maybe_apply_4_test_() ->
+    [{"failing case - builtin call",
+      ?_assertNotEqual(default,etbx:maybe_apply(math, cos, [1], default))
+     },
+     {"default for undef function",
+      ?_assertEqual(default,   etbx:maybe_apply(?MODULE, bar, [], default))
+     },
+     {"result for defined function",
+      ?_assertEqual(foo,       etbx:maybe_apply(?MODULE, foo, [], default))
+     },
+     {"builtin call",
+      ?_assertEqual(2,         etbx:maybe_apply(erlang, length, [[1,2]]))
+     }
     ].
 
 is_nil_test_() ->

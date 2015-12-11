@@ -20,7 +20,6 @@
 -export([if_nil/2]).
 -export([every_fun/1, some_fun/1]).
 -export([maybe_apply/3, maybe_apply/4]).
--export([safe_apply/3, safe_apply/4]).
 -export([merge/1]).
 -export([merge_with/2]).
 -export([pad/3]).
@@ -100,37 +99,18 @@ get_env(K, Default) ->
         undefined -> Default
     end.
 
-%% @doc Call the specified function if it exists, otherwise just don't and
-%% return undefined
+%% @doc Call the specified function if it is exported, otherwise just don't and
+%% return atom 'undefined'.
+%% @see maybe_apply/4
 -spec maybe_apply(module(), function(), list()) -> any().
 maybe_apply(Mod, Fun, Args) ->
     maybe_apply(Mod, Fun, Args, undefined).
 
-%% @doc Call the specified function if it exists, otherwise just don't and
-%% return the given Return parameter instead
--spec maybe_apply(module(), function(), list(), any()) -> any().
-maybe_apply(Mod, Fun, Args, Return) ->
-    try
-        apply(Mod, Fun, Args)
-    catch
-        error:undef -> Return
-    end.
-
-
-%% @doc Call the specified function if it is exported, otherwise just don't and
-%% return atom 'undefined'.
-%% @see maybe_apply/3
-%% @see safe_apply/4
--spec safe_apply(module(), function(), list()) -> any().
-safe_apply(Mod, Fun, Args) ->
-    safe_apply(Mod, Fun, Args, undefined).
-
 
 %% @doc Call the specified function if it is exported, otherwise just don't and
 %% return the given Return parameter instead.
-%% @see maybe_apply/4
--spec safe_apply(module(), function(), list(), any()) -> any().
-safe_apply(Mod, Fun, Args, Return) ->
+-spec maybe_apply(module(), function(), list(), any()) -> any().
+maybe_apply(Mod, Fun, Args, Return) ->
     Arity = length(Args),
     case erlang:function_exported(Mod, Fun, Arity) of
         true ->
