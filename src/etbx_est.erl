@@ -30,15 +30,14 @@ compile(Template0, PlaceholderPattern0) ->
           fun([{Start, PHL}, _] = Capture, {Acc, O, R}) ->
                   PreL = Start - O,
                   <<Prelude:PreL/binary, PH:PHL/binary, Epilogue/binary>> = R,
-                  Property = extract_property(PH, Capture),
-                  PropertyPart = #est_part{type = property, data = Property},
+                  Part     = extract_part(PH, Capture),
                   NewParts = 
-                      if Prelude == <<>> ->
-                              [PropertyPart | Acc ];
-                         true ->
-                              [PropertyPart |
-                               [#est_part{type = chunk, data = Prelude} | Acc]]
-                      end,
+                      [Part |
+                       if Prelude == <<>> ->
+                               Acc;
+                          true ->
+                               [#est_part{type = chunk, data = Prelude} | Acc]
+                       end],
                   {NewParts, Start + PHL, Epilogue}
           end,
           {[], 0, Template},
@@ -50,14 +49,22 @@ compile(Template0, PlaceholderPattern0) ->
     end.
 
 %% @private
-extract_property(Placeholder, [{Start, _Length}, {SubStart, SubLength}]) ->
+extract_part(Placeholder, [{Start, _Length}, {SubStart, SubLength}]) ->
     RStart = SubStart - Start,
     <<_:RStart/binary, Field:SubLength/binary, _/binary>> = Placeholder,
-    case etbx:eval(Field) of
-        {ok, Value, _} ->
-            Value;
-        E ->
-            {error, Placeholder, E}
+    case re:run(Field, <<"\s*&(.*)&\s*">>) of
+        {match, [{0, SubLength}, {EStart, ELen}]} ->
+            <<_:EStart/binary, Expr:ELen/binary, _/binary>> = Field,
+            #est_part{ type = expression, data = Expr };
+        _ ->
+            Property =
+                case etbx:eval(Field) of
+                    {ok, Value, _} ->
+                        Value;
+                    E ->
+                        {error, Placeholder, E}
+                end,
+            #est_part{type = property, data = Property}
     end.
 
 %% @doc
@@ -67,6 +74,23 @@ render(Part, Model, DefVal) when is_record(Part, est_part) ->
     case Part#est_part.type of
         chunk ->
             Part#est_part.data;
+        expression ->
+            Scope = [{'_@', fun etbx:get_value/2},
+                     {'_@@', fun etbx:get_value/3},
+                     {'__', Model}],
+            case catch etbx:eval(Part#est_part.data, Scope) of
+                {ok, Value, _} ->
+                    case Value of
+                        X when is_binary(X) -> X;
+                        X when is_number(X) -> etbx:to_binary(X);
+                        X when is_atom(X)   -> etbx:to_binary(X);
+                        X                   -> io_lib:format("~w", [X])
+                    end;
+                {error, Error} ->
+                    Error;
+                {'EXIT', {Error, _}} ->
+                    Error
+            end;
         property ->
             case etbx:get_in(Part#est_part.data, Model, DefVal) of
                 N when is_binary(N) ->

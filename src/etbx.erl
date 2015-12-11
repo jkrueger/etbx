@@ -3,31 +3,38 @@
 
 -module(etbx).
 -vsn("1.0.0").
+
 -export([any/2]).
 -export([contains/2]).
+-export([delete/2]).
+-export([doall/1]).
 -export([eval/1, eval/2]).
 -export([expand/2, expand/3]).
 -export([first/1]).
 -export([get_env/1, get_env/2]).
--export([get_value/2, get_value/3]).
 -export([get_in/3]).
+-export([get_value/2, get_value/3]).
 -export([index_of/2]).
 -export([index_of_any/2]).
 -export([is_nil/0, is_nil/1]).
+-export([if_nil/2]).
+-export([every_fun/1, some_fun/1]).
 -export([maybe_apply/3, maybe_apply/4]).
 -export([merge/1]).
 -export([merge_with/2]).
--export([update/3]).
 -export([pad/3]).
 -export([partition/2]).
 -export([pretty_stacktrace/0]).
 -export([remap/2]).
+-export([range/0, range/1, range/2, range/3]).
 -export([run/1, run/2, run/3]).
 -export([select/2]).
 -export([set_loglevel/1]).
+-export([seq/1, seq/2]).
 -export([split/2]).
 -export([start_app/1]).
 -export([stop_app/1]).
+-export([take/2]).
 -export([to_atom/1, to_atom/2]).
 -export([to_binary/1]).
 -export([to_float/1]).
@@ -37,6 +44,7 @@
 -export([to_string/1]).
 -export([to_tuple/1]).
 -export([trim/1]).
+-export([update/3]).
 
 %% @doc Returns one element from the list for which Pred(Elem) is not false.
 %% Kinda like lists:any but instead of returning true, it returns
@@ -91,21 +99,31 @@ get_env(K, Default) ->
         undefined -> Default
     end.
 
-%% @doc Call the specified function if it exists, otherwise just don't and
-%% return undefined
+%% @doc Call the specified function if it is exported, otherwise just don't and
+%% return atom 'undefined'.
+%% @see maybe_apply/4
 -spec maybe_apply(module(), function(), list()) -> any().
 maybe_apply(Mod, Fun, Args) ->
     maybe_apply(Mod, Fun, Args, undefined).
 
-%% @doc Call the specified function if it exists, otherwise just don't and
-%% return the given Return parameter instead
+
+%% @doc Call the specified function if it is exported, otherwise just don't and
+%% return the given Return parameter instead.
 -spec maybe_apply(module(), function(), list(), any()) -> any().
 maybe_apply(Mod, Fun, Args, Return) ->
-    try
-        apply(Mod, Fun, Args)
-    catch
-        error:undef -> Return
+    Arity = length(Args),
+    case erlang:function_exported(Mod, Fun, Arity) of
+        true ->
+            apply(Mod, Fun, Args);
+        false ->
+            case erlang:is_builtin(Mod, Fun, Arity) of
+                true ->
+                    apply(Mod, Fun, Args);
+                false ->
+                    Return
+            end
     end.
+
 
 %% @doc Set lager logging level at runtime. Specify one of debug, info,
 %% notice, warning, error, critical, alert or emergency.
@@ -159,6 +177,41 @@ is_nil({})        -> true;
 is_nil(<<>>)      -> true;
 is_nil(_)         -> false.
 is_nil()          -> true.
+
+
+%% @doc checks if value is_nil and returns the given default value if it is
+-spec if_nil(any(), any()) -> any().
+if_nil(V, D) ->
+    IsNil = is_nil(V),
+    if IsNil ->
+            D;
+       true ->
+            V
+    end.
+
+%% @doc returns a function that checks if all of the predicates in a list
+%% evaluate to true, given a parameter X
+-spec every_fun(list()) -> function().
+every_fun(Preds) ->
+    fun(X) ->
+      lists:all(
+        fun(Pred) ->
+            Pred(X)
+        end,
+        Preds)
+    end.
+
+%% @doc returns a function that checks if any of the predicates in a list
+%% evaluate to true, given a parameter X
+-spec some_fun(list()) -> function().
+some_fun(Preds) ->
+    fun(X) ->
+      lists:any(
+        fun(Pred) ->
+            Pred(X)
+        end,
+        Preds)
+    end.
 
 -type recspec()::tuple().
 -type proplist()::list(tuple()).
@@ -231,12 +284,27 @@ contains(X, [H | T]) ->
        true    -> contains(X, T)
     end.
 
-%% @doc update property K with value V in proplist L
--spec update(any(), any(), proplist()) -> proplist().
+%% @doc update property K with value V in an associate structure
+-spec update(any(), any(), proplist() | map()) -> proplist() | map().
 update(K, V, []) ->
     [{K,V}];
 update(K, V, [{_,_}|_] = L) ->
-    [{K, V} | proplists:delete(K, L)].
+    [{K, V} | proplists:delete(K, L)];
+update(K, V, {L}) when is_list(L) ->
+    {update(K, V, L)};
+update(K, V, M) when is_map(M) ->
+    maps:put(K, V, M).
+
+%% @doc delete property K from associative structure
+-spec delete(any(), proplist() | map()) -> proplist() | map().
+delete(_, []) ->
+    [];
+delete(K, [{_, _} | _] = L) ->
+    proplists:delete(K, L);
+delete(K, {L}) when is_list(L) ->
+    {delete(K, L)};
+delete(K, M) when is_map(M) ->
+    maps:remove(K, M).
 
 %% @doc merge objects in list L. It returns a single object with
 %% all the merged values. If a key is present in the list more than once,
@@ -256,15 +324,24 @@ merge([undefined | T], A) ->
     merge(T, A);
 merge([[] | T], A) ->
     merge(T, A);
-merge([[{_,_} | _] = H |T], A) ->
-    merge(T, lists:foldl(
-               fun({K,V}, AA) ->
-                       update(K, V, AA)
-               end,
-               A, H)).
+merge([H | T], A) ->
+    merge(T, merge_properties(H, A)).
+
+merge_properties({H}, {A}) ->
+    {merge_properties(H, A)};
+merge_properties({H}, A) ->
+    {merge_properties(H, A)};
+merge_properties(H, A) ->
+    lists:foldl(
+      fun({K,V}, AA) ->
+              update(K, V, AA)
+      end,
+      A, H).
 
 merge_with(F, [{dict,_,_,_,_,_,_,_,_} | _] = L) ->
     merge_with(F, L, dict:new());
+merge_with(F, [{OL} | _] = L) when is_list(OL) ->
+    merge_with(F, L, {[]});
 merge_with(F, L) ->
     merge_with(F, L, []).
 
@@ -274,6 +351,8 @@ merge_with(F, [undefined | T], A) ->
     merge_with(F, T, A);
 merge_with(F, [[] | T], A) ->
     merge_with(F, T, A);
+merge_with(F, [{[{_,_} | _] = L} | T], A) ->
+    merge_with(F, [L | T], A);
 merge_with(F, [[{_,_} | _] = L | T], A) ->
     merge_with(
       F, T, 
@@ -283,7 +362,7 @@ merge_with(F, [[{_,_} | _] = L | T], A) ->
               K,
               case get_value(K, S) of
                   undefined -> V;
-                  V2 ->        F(K, V, V2)
+                  V2 ->        F(K, V2, V)
               end,
               S)
         end,
@@ -411,7 +490,9 @@ get_value(K, O) ->
 get_value(K, O, D) when is_map(O) ->
     maps:get(K, O, D);
 get_value(K, O, D) when is_list(O) ->
-    proplists:get_value(K, O, D);    
+    proplists:get_value(K, O, D);
+get_value(K, {O}, D) when is_list(O) -> 
+    proplists:get_value(K, O, D);
 get_value(_, _, D) ->
     D.
 
@@ -530,5 +611,60 @@ to_hex(Bits) ->
     Token     = << << (integer_to_binary(X,16))/binary>> || <<X:4>> <= Bits >>,
     string:to_lower(etbx:to_list(Token)).
 
+%%%=========================================================================
+%%% (Lazy) sequences
+%%%=========================================================================
+
+seq(List) when is_list(List) ->
+    List.
+
+seq(Generator, State) ->
+    {Generator, State}.
+
+take(N, Seq) ->
+    take(N, Seq, []).
+
+take(N, Seq, Acc) when N=:=0 orelse Seq=:=[] ->
+    lists:reverse(Acc);
+take(N, [H|T], Acc) ->
+    take(N-1, T, [H | Acc]);
+take(N, {Generator, State}, Acc) when is_function(Generator) ->
+    {Value, NState} = Generator(State),
+    {Seq, NAcc} = case Value of
+                      undefined ->
+                          {[], Acc};
+                      _ ->
+                          {{Generator, NState}, [Value|Acc]}
+                  end,
+    take(N-1, Seq, NAcc).
+
+range() ->
+    range(0).
     
-    
+range(Min) ->
+    {fun(Last) -> {Last, Last + 1} end, Min}.
+
+range(Min, Max) when is_integer(Min), is_integer(Max) ->
+    range(Min, Max, 1).
+
+range(Min, Max, Step) when is_integer(Min), is_integer(Max), is_integer(Step) -> 
+    {fun(Last) when Last >= Max -> {undefined, Last};
+      (Last) -> {Last, Last+Step}
+     end, Min}.
+
+doall(Seq) ->
+    doall(Seq, []).
+
+doall([], Acc) ->
+    lists:reverse(Acc);
+doall(List, []) when is_list(List) ->
+    doall([], List);
+doall({Generator, State}, Acc) ->
+    {Value, NState} = Generator(State),
+    {Seq, NAcc} = case Value of
+                      undefined ->
+                          {[], Acc};
+                        _ ->
+                          {{Generator, NState}, [Value | Acc]}
+                  end,
+    doall(Seq, NAcc).

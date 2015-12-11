@@ -11,6 +11,21 @@ maybe_apply_test_() ->
     [?_assertEqual(foo,       etbx:maybe_apply(?MODULE, foo, [])),
      ?_assertEqual(undefined, etbx:maybe_apply(?MODULE, bar, []))].
 
+maybe_apply_4_test_() ->
+    [{"failing case - builtin call",
+      ?_assertNotEqual(default,etbx:maybe_apply(math, cos, [1], default))
+     },
+     {"default for undef function",
+      ?_assertEqual(default,   etbx:maybe_apply(?MODULE, bar, [], default))
+     },
+     {"result for defined function",
+      ?_assertEqual(foo,       etbx:maybe_apply(?MODULE, foo, [], default))
+     },
+     {"builtin call",
+      ?_assertEqual(2,         etbx:maybe_apply(erlang, length, [[1,2]]))
+     }
+    ].
+
 is_nil_test_() ->
     [?_assert(etbx:is_nil("")),
      ?_assert(etbx:is_nil([])),
@@ -60,7 +75,9 @@ update_test_() ->
      ?_assertEqual(etbx:update(foo, "foo", []),
                    [{foo, "foo"}]),
      ?_assertEqual(etbx:update(foo, "foo", [{bar, "bar"}]),
-                   [{foo, "foo"}, {bar, "bar"}])].
+                   [{foo, "foo"}, {bar, "bar"}]),
+     ?_assertEqual(etbx:update(foo, "foo", {[{bar, "bar"}]}),
+                   {[{foo, "foo"}, {bar, "bar"}]})].
      
 to_list_test_() ->
     [?_assertEqual(etbx:to_list(<<"foo">>),       "foo"),
@@ -105,10 +122,14 @@ index_of_any_test_() ->
      ?_assertEqual(undefined, etbx:index_of_any([foo], [baz, bar]))].
 
 merge_test_() ->
-    [?_assertEqual([],             etbx:merge([])),
-     ?_assertEqual([{b,2}, {a,1}], etbx:merge([[{a,1}, {b,2}], []])),
-     ?_assertEqual([{b,2}, {a,1}], etbx:merge([[{a,1}], [{b,2}]])),
-     ?_assertEqual([{b,0}, {a,1}], etbx:merge([[{a,1}, {b,2}], [{b,0}]]))].
+    [?_assertEqual([],               etbx:merge([])),
+     ?_assertEqual([{b,2}, {a,1}],   etbx:merge([[{a,1}, {b,2}], []])),
+     ?_assertEqual([{b,2}, {a,1}],   etbx:merge([[{a,1}], [{b,2}]])),
+     ?_assertEqual([{b,0}, {a,1}],   etbx:merge([[{a,1}, {b,2}], [{b,0}]])),
+     ?_assertEqual({[{b,0}, {a,1}]}, etbx:merge([{[{a,1}, {b,2}]}, 
+                                                 {[{b,0}]}])),
+     ?_assertEqual({[{b,0}, {a,1}]}, etbx:merge([{[{a,1}, {b,2}]}, 
+                                                 [{b,0}]]))].
 
 get_value_test_() ->
     [?_assertEqual(foo, etbx:get_value(bar, #{bar => foo})),
@@ -169,3 +190,18 @@ partition_test_() ->
 pad_test_() ->
     [?_assertEqual([foo, bar, baz], etbx:pad(3, [foo, bar], baz)),
      ?_assertEqual([foo, bar, baz], etbx:pad(3, [foo, bar, baz], cho))].
+
+seq_test_() ->
+    [?_assertEqual([1, 2, 3, 4], etbx:take(4, [1, 2, 3, 4, 5])),
+     ?_assertEqual([1, 2, 3],    etbx:take(4, [1, 2, 3])),
+     ?_assertEqual([1, 2, 3, 4], 
+                   etbx:take(4, etbx:seq(fun(Last) ->
+                                                 V = Last + 1,
+                                                 {V, V}
+                                         end, 0))),
+     ?_assertEqual([0, 1, 2, 3], etbx:take(4, etbx:range())),
+     ?_assertEqual([1, 2, 3],    etbx:take(4, etbx:range(1, 4))),
+     ?_assertEqual([2,5,8],      etbx:take(4, etbx:range(2, 10, 3))),
+     ?_assertEqual([1,4,7,10],   etbx:doall(etbx:range(1, 12, 3))),
+     ?_assertEqual([1, 2, 3, 4], etbx:doall(etbx:range(1,5)))].
+
